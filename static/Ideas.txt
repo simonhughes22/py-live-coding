@@ -1,0 +1,76 @@
+﻿Tracing
+  Trace Vars as they are assigned
+  Trace execution paths
+  Count number of times each loop is iterated
+  Trace breaks, continues, and returns
+  log full trace to separate textarea (debugging mainly)
+
+  Visualization
+    Provide cool and useful visualizations for trace
+	  e.g. in foreach, allow user to page thru each iteration, seeing that loops trace
+	  and the current state of the collection.
+	Have a tree view like mode where user edits AST instead of code (how useful?)
+
+Code Snippets
+  Type #anon -> creates an anonymous function
+  Type #f -> function
+  Type #class -> function MyClass(args){ var self = this; ... return self; }
+    Have resharper type templating where it prompts you for various inputs
+
+Indenting
+  Improve it.
+  Brace folding
+  Support for regions (use comments to avoid adding unsupported language features)
+	e.g.
+	//REGION "Simon Says"
+	//ENDREGION
+
+Refactoring
+  Only include what is useful. Mainly use rename and extract method. Maybe 
+    have extract class (creates a class using all local vars \ functions)
+  Record refactorings for a file, and have the option to replay them on other files (sequence of file and replaces, or more complex)
+
+Editing
+	Allow easy clone of current function (e.g. for unit tests)
+	Allow easy re-order of current statement (e.g. move decln in front
+	  of other, swap function order)
+
+Performance
+  Log execution speed
+
+History
+  Track all edits in the session
+ 
+Intellisense
+  We need it!
+  Be clever, warn if var doesn't exist
+  If method called before on unknown class, assume exists and add it to the list (while still somewhere in code)
+  Predict next token based on history (some work....)
+
+Assign key commands
+  Make it context sensitive e.g. ctrl-click on method jumps to defn, on literal number
+    brings up slider, on color (look for # and hex codes only using reg ex) bring up picker 
+
+Jump to definition
+  On methods
+  On vars
+
+Alerts
+  Allow user to define how to handle alerts, confirms, and prompts
+
+Unit testing
+  Create module for unit testing
+  Experiment with logic to make code pass
+
+Find similar code
+  As user types, scan a pre-specified set of files for similar
+	bits of code (or store history of unique lines of code (that compile))
+
+Implement in C#
+
+Assertions
+  Allow definitions of assertions which are verified during code execution
+
+Record User input
+  Use JQuery to record click and change events.
+  Allow replay of events.

@@ -1,0 +1,170 @@
+/* Elements */
+html, body {
+    color: white;
+    background-color: #112435;
+}
+
+body {
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    padding: 2px;
+    font-size: 12px;
+}
+
+iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background-color: white;
+}
+
+/* Override JQuery UI radio button style to look like tabs */
+label.tabLbl {
+    border-bottom-left-radius: 0px !important;
+    border-bottom-right-radius: 0px !important;
+}
+
+.radiobuttons input {
+    height: 5px;
+    width: 5px;
+}
+
+/* Trace Editor */ 
+div.reset {
+    clear: both;
+}
+
+
+/*Classes*/
+.jsError {
+    border-bottom: 2px solid #e10d0d;
+}
+
+.error {
+    color: red;
+    font-weight: bolder;
+}
+
+span.traceOutput
+{
+    /*border: 2px solid rgba(255,0,0,0.5);*/
+    margin-left: 1px;
+    color: #f50000 !important; 
+    font-weight: bold;    
+}
+
+.rounded-right-corners {
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+
+.link {
+    color: white;  /* Editor Gutter Right Border Color */
+    font-family: Calibri;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 15px 15px 15px 10px;
+    font-style: italic;
+}
+
+    .link:hover {
+        color: white;
+        cursor: pointer;
+        background-color: #0972A5;
+    }
+
+.top {
+    height: 5%;
+    min-height: 30px;
+}
+
+.tabs {
+    background-color: #fff;
+    padding: 0px;
+    background-color: transparent;
+}
+
+.title {
+    font-size: 20px;
+}
+
+.leftside {
+    width: 49.5%;
+    float: left;
+    margin-right: 1px;
+}
+
+.rightside {
+    width: 50%;
+    float: right;
+}
+
+.verticalfill {
+    height: 95.5%;
+}
+
+.fill {
+    height: 100%;
+    width: 100%;
+}
+
+/* CodeMirror */
+.CodeMirror {
+    width: 100%;
+    border-radius: 3px;
+    box-shadow: 0 0 8px white;
+}
+
+.CodeMirror-scroll {
+    height: 100%;
+    overflow-y: hidden;
+    overflow-x: auto;
+}
+
+span.CodeMirror-matchhighlight {
+    background: #1F4661;
+}
+
+.CodeMirror-focused span.CodeMirror-matchhighlight {
+    background: #FFFFFF;
+    color: #112345 !important;
+}
+
+/*Trace Tab*/
+#tab-trace .CodeMirror {
+    box-shadow: 0 0 18px rgba(0,0,0,0.8) inset ;
+}
+
+#tab-trace .CodeMirror-scroll {
+    background-color: transparent;
+    overflow-y: hidden;
+    overflow-x: hidden;
+}
+
+#tab-trace .codemirror-scrollbar
+{
+    overflow-y: hidden;
+    overflow-x: hidden;
+}
+
+/* Custom Scroll bar style */
+::-webkit-scrollbar {
+    width: 8px;
+} 
+    /*  Track */
+::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3); 
+    -webkit-border-radius: 10px;
+    border-radius: 10px;
+}
+ 
+    /* Handle */
+::-webkit-scrollbar-thumb {
+    -webkit-border-radius: 10px;
+    border-radius: 10px;
+    background: rgba(255,255,255,1.0); 
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5); 
+}
+
+::-webkit-scrollbar-thumb:window-inactive {
+    background: rgba(255,255,255,0.4); 
+}

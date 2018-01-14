@@ -1,0 +1,93 @@
+
+<html>
+<head>
+    <title>Js Edit</title>
+
+    <link rel="stylesheet" href="tools/CodeMirror-2.32/lib/codemirror.css">
+    <link rel="stylesheet" href="tools/CodeMirror-2.32/theme/night.css">
+    <link rel="stylesheet" href="tools/CodeMirror-2.32/lib/util/simple-hint.css">
+    <link rel="stylesheet" href="tools/CodeMirror-2.32/theme/rubyBlue.css">
+
+    <link type="text/css" href="styles/jsedit.css" rel="stylesheet">
+    <link type="text/css" href="tools/jquery-ui-1.8.21.custom/css/dark-hive/jquery-ui-1.8.21.custom.css"
+        rel="stylesheet" />
+
+    <!-- External Libraries -->
+    <!-- Code Mirror-->
+    <script type="text/javascript" src="tools/CodeMirror-2.32/lib/codemirror.js"></script>
+    <script type="text/javascript" src="tools/CodeMirror-2.32/mode/javascript/javascript.js"></script>
+    <script type="text/javascript" src="tools/CodeMirror-2.32/lib/util/simple-hint.js"></script>
+
+    <script type="text/javascript" src="tools/CodeMirror-2.32/lib/util/javascript-hint.js"></script>
+    <script type="text/javascript" src="tools/CodeMirror-2.32/lib/util/searchcursor.js"></script>
+    <script type="text/javascript" src="tools/CodeMirror-2.32/lib/util/match-highlighter.js"></script>
+
+    <!-- Jquery/ JQuery UI -->
+    <script type="text/javascript" src="tools/jquery-ui-1.8.21.custom/js/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="tools/jquery-ui-1.8.21.custom/js/jquery-ui-1.8.21.custom.min.js"></script>
+
+    <!-- Other -->
+    <script type="text/javascript" src="scripts/lib/knockout-2.1.0.debug.js"></script>
+    <script type="text/javascript" src="scripts/lib/esprima.js"></script>
+
+    <!-- Custom Code -->
+    <script type="text/javascript" src="scripts/helper.js"></script>
+    <script type="text/javascript" src="scripts/extensions.js"></script>
+    <script type="text/javascript" src="scripts/fileLoader.js"></script>
+    <script type="text/javascript" src="scripts/updater.js"></script>
+    <script type="text/javascript" src="scripts/htmlFileTransform.js"></script>
+    <script type="text/javascript" src="scripts/javaScriptParser.js"></script>
+    <script type="text/javascript" src="scripts/errorHandler.js"></script>
+    <script type="text/javascript" src="scripts/visitor.js"></script>
+    <script type="text/javascript" src="scripts/jsTracer.js"></script>
+    <script type="text/javascript" src="scripts/settings.js"></script>
+    <script type="text/javascript" src="scripts/lib/json2.js"></script>
+
+    <script type="text/javascript" src="scripts/onLoad.js"></script>
+
+    <script>
+        // Main Entry Point
+        $(document).ready(onJsEditLoad);
+    </script>
+</head>
+
+<body>
+    <div class="leftside verticalfill">
+        <div class="title top">
+            <span style='margin-left: 5px;'>Live Python Editor</span>
+        </div>
+        <textarea id="code" name="code" style=""></textarea>
+    </div>
+
+    <div class="rightside" style="height: 100%">
+        <div class="tabs top">
+            <div id="radiobuttons">
+                <span data-bind="visible: fileLoader.fileSelected">
+                    <input id="rdo-html" type="radio" name="radio" value="html" />
+                    <label class="tabLbl" for="rdo-html">
+                        <span id="lblHtml"></span>
+                    </label>
+                </span>
+                <span id="traceTabBtn">
+                    <input id="rdo-trace" type="radio" name="radio" value="trace" checked="checked" />
+                    <label class="tabLbl" for="rdo-trace">Trace</label>
+                </span>
+            </div>
+
+        </div>
+        <div class="verticalfill">
+            <div id="tab-html" class="tabitem" data-bind="visible: tabs() == 'html'">
+                <iframe id="preview" class="rounded-right-corners">                    
+                </iframe>
+            </div>
+
+            <div id="tab-trace" class="tabitem" data-bind="visible: tabs() == 'trace'">
+                <textarea id="txtTrace" class="fill debug rounded-right-corners"
+                    readonly="readonly"></textarea>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>
