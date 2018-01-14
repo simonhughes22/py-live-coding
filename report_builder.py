@@ -1,3 +1,8 @@
+"""
+Code take from Don Kirkby's excellent python tracing library: https://github.com/donkirkby/live-py-plugin
+
+"""
+
 import re
 
 import os

@@ -1,3 +1,8 @@
+"""
+Code take from Don Kirkby's excellent python tracing library: https://github.com/donkirkby/live-py-plugin
+
+"""
+
 import argparse
 from ast import (fix_missing_locations, iter_fields, parse, Add, Assign, AST,
                  Attribute, BitAnd, BitOr, BitXor, Call, Div, Ellipsis,
