@@ -8,11 +8,14 @@ import re
 import os
 import sys
 import traceback
-
+import datetime
+import collections
 
 class ReportBuilder(object):
     def __init__(self, message_limit=None):
         self.messages = []
+        self.rows = [] # store rows for the data frame
+        self.line_number_messages = collections.defaultdict(list)
         self.assignments = []
         self.message_count = 0
         self.message_limit = message_limit
@@ -108,6 +111,7 @@ class ReportBuilder(object):
     def add_message(self, message, line_number):
         """ Add a message to the report on line line_number (1-based). """
         self._increment_message_count()
+        ts = str(datetime.datetime.now())
         if self.is_muted:
             return
         if '\n' in message:
@@ -117,6 +121,17 @@ class ReportBuilder(object):
         new_width = len(self.messages[line_number - 1]) + len(message)
         self._update_frame_width(new_width, line_number)
         self.messages[line_number - 1] += message
+
+        # store calls by line number
+        self.line_number_messages[line_number].append(message)
+        # rows for the dataframe
+        self.rows.append({
+            "exec_no":              self.message_count-1, # start at 0, so remove last increment
+            "line_no":              line_number,
+            "line_no_exec_num":     len(self.line_number_messages[line_number]),
+            "message":              message,
+            "timestamp":            ts
+        })
 
     def check_output(self):
         if self.current_output:

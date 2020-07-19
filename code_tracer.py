@@ -670,54 +670,6 @@ class LineNumberCleaner(NodeTransformer):
                 self.max_line = lineno
         return self.generic_visit(node)
 
-
-class TracedModuleFinder(object):
-    def __init__(self,
-                 module_name,
-                 traced_code,
-                 environment,
-                 filename,
-                 is_own_driver):
-        """ Import the code that has been instrumented for live coding.
-
-        :param module_name: name of the module to load in sys.modules, or None
-        :param traced_code: compiled code for the module
-            to load it as the live coding module
-        :param environment: global variables for the module
-        :param filename: the name of the file this code came from
-        :param is_own_driver: True if this module should be loaded as the main
-            module, but in a package.
-        """
-        self.module_name = module_name
-        self.traced_code = traced_code
-        self.environment = environment
-        self.filename = filename
-        self.is_own_driver = is_own_driver
-
-    def find_module(self, fullname, path=None):
-        if (fullname == self.module_name or
-                (fullname == SCOPE_NAME and self.is_own_driver)):
-            return self
-
-    def load_module(self, fullname):
-        if '.' in self.module_name:
-            package_name, child_name = self.module_name.rsplit('.', 1)
-        else:
-            package_name = None
-        new_mod = imp.new_module(fullname)
-        sys.modules[fullname] = new_mod
-        new_mod.__builtins__ = builtins
-        if self.filename is not None:
-            new_mod.__file__ = self.filename
-        new_mod.__package__ = package_name
-
-        new_mod.__dict__.update(self.environment)
-        self.environment = new_mod.__dict__
-
-        exec(self.traced_code, self.environment)
-        return new_mod
-
-
 @contextmanager
 def swallow_output():
     old_stdout = sys.stdout
@@ -739,6 +691,7 @@ class CodeTracer(object):
 
         self.environment = {}
         self.return_code = None
+        self.report_builder = None
 
     def run_python_module(self, modulename):
         """Run a python module, as though with ``python -m name args...``.
@@ -832,32 +785,27 @@ class CodeTracer(object):
 
     def trace_code(self,
                    source,
-                   load_as=SCOPE_NAME,
-                   is_module=False,
-                   dump=False,
-                   driver=None,
-                   filename=None,
-                   bad_driver=None):
+                   global_context,
+                   local_context,
+                   dump=False):
         """ Trace a module of source code, possibly by running a driver script.
         
         :param str source: the source code to trace
-        :param str load_as: the module name to load the source code as
-        :param bool is_module: True if the driver is a module name instead of a
-        file name
+        :param global_context: the context the code is executed in (globals)
+        :param local_context:  the local context the code is executed in (locals)
         :param bool dump: True if the source code should be included in the
         output
-        :param list driver: the driver script's file name or module name and args
-        :param str filename: the file name of the source code
-        :param str bad_driver: a message to display if the driver doesn't call
-        the module
         """
         builder = ReportBuilder(self.message_limit)
         builder.max_width = self.max_width
+        self.report_builder = builder
         self.return_code = 0
 
         try:
+            # Parse the original AST
             tree = parse(source, PSEUDO_FILENAME)
 
+            # Modify the tree to add the insert statements
             new_tree = Tracer().visit(tree)
             fix_missing_locations(new_tree)
             LineNumberCleaner().visit(new_tree)
@@ -865,34 +813,21 @@ class CodeTracer(object):
             # print(dump(new_tree, include_attributes=True))
             code = compile(new_tree, PSEUDO_FILENAME, 'exec')
 
-            # Set sys.argv properly.
-            old_argv = sys.argv
-            sys.argv = driver or [filename or load_as]
+            # RUN CODE
+            self.environment[CONTEXT_NAME] = builder
 
-            try:
-                self.run_code(code,
-                              builder,
-                              load_as,
-                              is_module,
-                              driver,
-                              filename,
-                              bad_driver)
-            finally:
-                # Restore the old argv and path
-                sys.argv = old_argv
-
-                # During testing, we import these modules for every test case,
-                # so force a reload. This is only likely to happen during testing.
-                for target in (load_as, SCOPE_NAME):
-                    if target in sys.modules:
-                        del sys.modules[target]
-                for i in reversed(range(len(sys.meta_path))):
-                    if isinstance(sys.meta_path[i], TracedModuleFinder):
-                        sys.meta_path.pop(i)
+            # Make a copy of globals so as not to mutate
+            global_context_copy = dict(global_context.items())
+            global_context_copy[CONTEXT_NAME] = builder
+            seed(0)
+            with swallow_output():
+                # ret_val = eval(code, context_copy)
+                exec(code, global_context_copy, local_context)
 
             for value in self.environment.values():
                 if isinstance(value, types.GeneratorType):
                     value.close()
+
         except SyntaxError:
             self.return_code = 1
             ex = sys.exc_info()[1]
@@ -906,6 +841,7 @@ class CodeTracer(object):
                                                   ex.lineno,
                                                   message)
             builder.add_message(message, line_number)
+
         except BaseException as ex:
             self.return_code = getattr(ex, 'code', 1)
             etype, value, tb = sys.exc_info()
@@ -943,69 +879,7 @@ class CodeTracer(object):
                         ' | ' + report_line)
                 dump_lines.append(line)
             report = '\n'.join(dump_lines)
-
         return report
-
-    def run_code(self,
-                 code,
-                 builder,
-                 load_as,
-                 is_module,
-                 driver,
-                 filename,
-                 bad_driver):
-        """ Run the traced module, plus its driver.
-
-        :param code: the compiled code for the traced module
-        :param builder: the report builder
-        :param str load_as: the module name to load the source code as
-        :param bool is_module: True if the driver is a module name instead of a
-        file name
-        :param list driver: the driver script's file name or module name and args
-        :param str filename: the file name of the source code
-        :param str bad_driver: a message to display if the driver doesn't call
-        the module
-        """
-        self.environment[CONTEXT_NAME] = builder
-        is_own_driver = ((is_module and driver and driver[0] == load_as) or
-                         load_as == SCOPE_NAME)
-        seed(0)
-        module_finder = TracedModuleFinder(load_as,
-                                           code,
-                                           self.environment,
-                                           filename,
-                                           is_own_driver)
-        sys.meta_path.insert(0, module_finder)
-        if is_own_driver:
-            with swallow_output():
-                import_module(SCOPE_NAME)
-        else:
-            start_count = builder.message_count
-            with swallow_output():
-                try:
-                    if not is_module:
-                        self.run_python_file(driver[0])
-                        end_count = builder.count_all_messages()
-                    else:
-                        module_name = driver[0]
-                        self.run_python_module(module_name)
-                        end_count = builder.count_all_messages()
-                except SystemExit as ex:
-                    end_count = builder.count_all_messages()
-                    if ex.code:
-                        self.return_code = ex.code
-                        messages = traceback.format_exception_only(type(ex),
-                                                                   ex)
-                        message = messages[-1].strip()
-                        self.report_driver_result(builder, [message])
-            if end_count == start_count:
-                driver_name = os.path.basename(driver[0])
-                message = (bad_driver or "{} doesn't call the {} module."
-                                         " Try a different driver.".format(driver_name,
-                                                                           load_as))
-                self.report_driver_result(builder, [message])
-        self.environment = module_finder.environment
-
 
 class FileSwallower(object):
     def __init__(self,
