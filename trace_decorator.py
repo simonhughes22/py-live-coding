@@ -3,17 +3,38 @@ from code_tracer import CodeTracer
 import random
 import inspect
 
-def remove_decorator_and_indent(source):
-    source = source.strip()
-    lines = [l for l in source.split("\n") if '@trace' not in l]
+def separate_preamble_and_remove_indent(source):
+    lines = source.split("\n")
 
-    def_line = [l for l in lines if "def " in l][0]
-    indent = def_line.find("def ")
-    if indent > -1:
-        lines = [l[indent:] for l in lines]
-    return "\n".join(lines)
+    # remove any lines before the first def statement, i.e. start of the functio definition
+    # these will be decorators or comments
+    def_index = -1
+    for i, line in enumerate(lines):
+        # skip document headers
+        if line.strip().startswith("#") or line.strip().startswith("\""):
+            continue
+        if "def " in line:
+            def_index = i
+            break
 
-def add_fn_call(source, fn):
+    assert def_index >= 0, "No def statement found. This code is designed only for use with function definitions"
+    # drop all lines before the def statemenbt
+    preamble_lines = lines[:def_index]
+
+    lines = lines[def_index:]
+    # get def statment line
+    def_line = lines[0]
+    # get indent length of def statement
+    indent_ix = def_line.find("def ")
+    if indent_ix > -1:
+        # remove indent from all remaining source lines
+        lines = [l[indent_ix:] for l in lines]
+        # pre-pend 4 spaces as the report builder does this also
+        preamble_lines = ["    " + l[indent_ix:] for l in preamble_lines]
+
+    return "\n".join(preamble_lines), "\n".join(lines).strip()
+
+def append_fn_call(source, fn):
     var_name = f"live_py_var_{random.randint(0, 999999999)}"
     return f"{source}\n{var_name}={fn.__name__}(*args, **kwargs)", var_name
 
@@ -26,39 +47,32 @@ def remove_fn_call(trace):
 def trace(fn):
 
     source = inspect.getsource(fn)
-    source = remove_decorator_and_indent(source)
+    preamble, source = separate_preamble_and_remove_indent(source)
+    dump = True
+    max_width = 2000
 
     def wrapper(*args, **kwargs):
         # create a global variable to store the result within. Make sure it is unlikely to already exist
-        exec_code, var_name = add_fn_call(source, fn)
+        exec_code, var_name = append_fn_call(source, fn)
 
         tracer = CodeTracer()
-        tracer.max_width = 200000
+        tracer.max_width = max_width
 
-        trace = tracer.trace_code(exec_code, global_context=globals(), local_context=locals(), dump=True)
+        local_context_copy = dict(locals())
+        trace = tracer.trace_code(exec_code, global_context=fn.__globals__, local_context=local_context_copy, dump=dump)
         trace = remove_fn_call(trace)
+        # add back in the preamble if dumping code also
+        if dump:
+            trace = preamble + "\n" + trace
 
+        print("*** Trace Output *** ".ljust(80,"-"))
         print(trace)
+        print("*** END Trace Output *** ".ljust(80,"-"))
         # get return val
-        ret_val = locals()[var_name]
+        ret_val = None
+        if var_name in local_context_copy:
+            ret_val = local_context_copy[var_name]
         return ret_val
 
     return wrapper
-
-if __name__ == '__main__':
-
-    try:
-
-        @trace
-        def add(a, b):
-            s1 = "aaa"
-            s2 = "bbb"
-            s3 = s1 + "," + s2
-            return a + b
-
-        val = add(10,12)
-
-    except Exception as e:
-        exc = format_exc()
-        print(exc)
 
