@@ -1,7 +1,7 @@
-from traceback import format_exc
-from code_tracer import CodeTracer
-import random
 import inspect
+import random
+
+from code_tracer import CodeTracer
 
 def separate_preamble_and_remove_indent(source):
     lines = source.split("\n")
@@ -35,7 +35,7 @@ def separate_preamble_and_remove_indent(source):
     return "\n".join(preamble_lines), "\n".join(lines).strip()
 
 def append_fn_call(source, fn):
-    var_name = f"live_py_var_{random.randint(0, 999999999)}"
+    var_name = f"_live_py_var_{random.randint(0, 999999999)}"
     return f"{source}\n{var_name}={fn.__name__}(*args, **kwargs)", var_name
 
 def remove_fn_call(trace):
@@ -68,11 +68,11 @@ def trace(fn):
         print("*** Trace Output *** ".ljust(80,"-"))
         print(trace)
         print("*** END Trace Output *** ".ljust(80,"-"))
+
         # get return val
         ret_val = None
         if var_name in local_context_copy:
             ret_val = local_context_copy[var_name]
         return ret_val
-
     return wrapper
 

@@ -656,7 +656,6 @@ class Tracer(NodeTransformer):
                     starargs=None,
                     kwargs=None)
 
-
 class LineNumberCleaner(NodeTransformer):
     def __init__(self):
         self.max_line = 0
@@ -685,7 +684,7 @@ def swallow_output():
 
 class CodeTracer(object):
     def __init__(self):
-        self.message_limit = 10000
+        self.message_limit = 10000000
         self.max_width = None
         self.keepalive = False
 
@@ -785,8 +784,8 @@ class CodeTracer(object):
 
     def trace_code(self,
                    source,
-                   global_context,
-                   local_context,
+                   global_context=dict(),
+                   local_context=dict(),
                    dump=False):
         """ Trace a module of source code, possibly by running a driver script.
         
@@ -911,75 +910,3 @@ class FileSwallower(object):
 
     def __getattr__(self, name):
         return getattr(self.target, name)
-
-
-def main():
-    parser = argparse.ArgumentParser(
-        description='Trace Python code.',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-c',
-                        '--canvas',
-                        action='store_true',
-                        help='Should canvas commands be printed?')
-    parser.add_argument('-x',
-                        '--width',
-                        type=int,
-                        default=800,
-                        help='width of the canvas in pixels')
-    parser.add_argument('-y',
-                        '--height',
-                        type=int,
-                        default=600,
-                        help='height of the canvas in pixels')
-    parser.add_argument('-d',
-                        '--dump',
-                        action='store_true',
-                        help='dump source code with report')
-    parser.add_argument('-f',
-                        '--filename',
-                        help='file name to save in __file__')
-    parser.add_argument('-b',
-                        '--bad_driver',
-                        help="message to display if driver doesn't call module")
-    parser.add_argument('-m',
-                        '--module',
-                        action='store_true',
-                        help='driver is an importable module, not a script')
-    parser.add_argument('source',
-                        nargs=argparse.OPTIONAL,
-                        default='-',
-                        help='source file to trace, or - for stdin')
-    parser.add_argument('load_as',
-                        nargs=argparse.OPTIONAL,
-                        default=SCOPE_NAME,
-                        help='load traced code as a module with this name')
-    parser.add_argument('driver',
-                        nargs=argparse.REMAINDER,
-                        help='script to call traced code, plus any arguments')
-
-    args = parser.parse_args()
-    if args.driver and args.driver[0] in ('-m', '--module'):
-        args.module = True
-        args.driver = args.driver[1:]
-    if args.source == '-':
-        code = sys.stdin.read()
-    else:
-        with open(args.source, 'r') as source:
-            code = source.read()
-
-    tracer = CodeTracer()
-    tracer.max_width = 200000
-    code_report = tracer.trace_code(code,
-                                    dump=args.dump,
-                                    load_as=args.load_as,
-                                    is_module=args.module,
-                                    driver=args.driver,
-                                    filename=args.filename,
-                                    bad_driver=args.bad_driver)
-    print(code_report)
-    if tracer.return_code:
-        exit(tracer.return_code)
-
-
-if __name__ == '__main__':
-    main()
